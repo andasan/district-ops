@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/apps/" />
+  <Folder Name="/apps/api/">
+    <Project Path="apps/api/DistrictOps.Api.Tests/DistrictOps.Api.Tests.csproj" />
+    <Project Path="apps/api/DistrictOps.Api/DistrictOps.Api.csproj" />
+    <Project Path="apps/api/DistrictOps.Domain/DistrictOps.Domain.csproj" />
+    <Project Path="apps/api/DistrictOps.Infrastructure/DistrictOps.Infrastructure.csproj" />
+  </Folder>
+</Solution>

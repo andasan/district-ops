@@ -1,0 +1,25 @@
+# Dependencies
+**/node_modules
+**/bin
+**/obj
+**/.next
+**/out
+**/dist
+*.user
+*.suo
+.vs/
+.idea/
+.DS_Store
+.env
+.env.local
+.env*.local
+TestResults/
+playwright-report/
+test-results/
+blob-report/
+coverage/
+*.log
+
+# Impeccable session / build artifacts (keep PRODUCT.md / DESIGN.md)
+.impeccable/
+**/.impeccable/

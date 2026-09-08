@@ -1,0 +1,33 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: district_ops
+      POSTGRES_USER: district
+      POSTGRES_PASSWORD: district
+    ports:
+      - "5432:5432"
+    volumes:
+      - district_ops_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U district -d district_ops"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HTTP_PORT: 8080
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./docker/keycloak/district-ops-realm.json:/opt/keycloak/data/import/district-ops-realm.json:ro
+    profiles:
+      - auth
+
+volumes:
+  district_ops_pg:

@@ -1,0 +1,56 @@
+{
+  "realm": "district-ops",
+  "enabled": true,
+  "displayName": "District Ops",
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "editUsernameAllowed": false,
+  "clients": [
+    {
+      "clientId": "district-ops-web",
+      "name": "District Ops Web",
+      "enabled": true,
+      "publicClient": true,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "redirectUris": ["http://localhost:3000/*"],
+      "webOrigins": ["http://localhost:3000"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
+    },
+    {
+      "clientId": "district-ops-api",
+      "name": "District Ops API",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "district-ops-api-secret",
+      "serviceAccountsEnabled": false,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "bearerOnly": true
+    }
+  ],
+  "users": [
+    {
+      "username": "editor",
+      "enabled": true,
+      "email": "editor@example.com",
+      "firstName": "North",
+      "lastName": "Editor",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "editor",
+          "temporary": false
+        }
+      ],
+      "attributes": {
+        "tenant_id": ["11111111-1111-1111-1111-111111111111"]
+      }
+    }
+  ]
+}
