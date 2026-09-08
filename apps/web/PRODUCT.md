@@ -21,7 +21,7 @@ Next.js UI against an ASP.NET Core API with fixture ReBAC
 ## Operating Context
 
 - Home console: persona switcher, start enrollment, workflow list with status, links to job detail and attendance
-- Job detail: polls ASP.NET job endpoint until terminal status
+- Job detail `/jobs/[id]`: polls ASP.NET job endpoint until terminal status; rail persona switch re-fetches
 - Attendance report: dense table filtered by ReBAC; Prairie persona demos tenant isolation
 - Dev auth via headers today; Keycloak path planned
 - Demo / study repo; not production SaaS
@@ -42,7 +42,7 @@ Next.js UI against an ASP.NET Core API with fixture ReBAC
 
 ## Evidence on Hand
 
-- Live UI at `/`, `/reports`, `/workflows/[id]`
+- Live UI at `/`, `/reports`, `/jobs/[id]`
 - Seed personas and README role table
 - API OpenAPI at `http://localhost:5080/openapi/v1.json` in local demo
 - No real customer logos, testimonials, or production metrics — do not fabricate commercial claims

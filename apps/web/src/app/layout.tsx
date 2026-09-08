@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, Noto_Sans_JP } from "next/font/google";
+import { AppShell } from "../components/AppShell";
+import { PersonaProvider } from "../identity/PersonaProvider";
 import "./globals.css";
 
 const opsSans = Noto_Sans_JP({
@@ -36,7 +38,9 @@ export default function RootLayout({
           FORM: Japanese High-Density Web · challenger wins · seed 57781702.
           FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
         */}
-        {children}
+        <PersonaProvider>
+          <AppShell>{children}</AppShell>
+        </PersonaProvider>
       </body>
     </html>
   );

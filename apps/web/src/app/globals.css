@@ -162,12 +162,58 @@ textarea {
   color: var(--ops-red);
 }
 
-.ops-rail-foot {
+.ops-rail-persona {
   margin-top: auto;
+  padding: 0.55rem 0.5rem 0.35rem;
+  border-top: var(--ops-line);
+  display: grid;
+  gap: 0.45rem;
+}
+
+.ops-rail-persona .ops-field {
+  margin: 0;
+}
+
+.ops-rail-persona .ops-select {
+  width: 100%;
+  font-size: 0.72rem;
+}
+
+.ops-rail-persona-meta {
+  margin: 0;
+  color: var(--ops-gray-4);
+  font-size: 0.68rem;
+  line-height: 1.4;
+}
+
+.ops-rail-persona-meta code {
+  font-family: var(--font-ops-mono), ui-monospace, monospace;
+  font-size: 0.62rem;
+}
+
+.ops-rail-foot {
   padding: 0.5rem;
   color: var(--ops-gray-4);
   font-size: 0.7rem;
   line-height: 1.45;
+}
+
+.ops-scope-chip {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 12rem;
+  padding: 0.45rem 0.65rem;
+  border: var(--ops-line);
+  background: var(--ops-gray-1);
+}
+
+.ops-scope-label {
+  color: var(--ops-gray-4);
+  font-family: var(--font-ops-mono), ui-monospace, monospace;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .ops-main {

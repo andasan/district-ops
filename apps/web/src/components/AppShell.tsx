@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cx } from "@district-ops/ui";
+import { usePersona } from "../identity/PersonaProvider";
 
 const NAV = [
   { href: "/", label: "Console", code: "01" },
@@ -15,14 +16,17 @@ const NAV = [
   },
 ] as const;
 
-export function AppShell({
-  children,
-  eyebrow,
-}: {
-  children: React.ReactNode;
-  eyebrow?: string;
-}) {
+const EYEBROW_BY_PATH: Array<{ match: (path: string) => boolean; label: string }> = [
+  { match: (p) => p.startsWith("/jobs/"), label: "Async job status" },
+  { match: (p) => p.startsWith("/reports"), label: "Attendance report" },
+  { match: () => true, label: "Operational console" },
+];
+
+export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { persona, personas, setPersonaByUserId } = usePersona();
+  const eyebrow =
+    EYEBROW_BY_PATH.find((e) => e.match(pathname))?.label ?? "District Ops";
 
   return (
     <div className="ops-shell">
@@ -68,75 +72,37 @@ export function AppShell({
             );
           })}
         </nav>
+
+        <div className="ops-rail-persona">
+          <label className="ops-field">
+            <span>Dev persona</span>
+            <select
+              className="ops-select"
+              value={persona.userId}
+              onChange={(e) => setPersonaByUserId(e.target.value)}
+              aria-label="Dev persona"
+            >
+              {personas.map((p) => (
+                <option key={p.userId} value={p.userId}>
+                  {p.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <p className="ops-rail-persona-meta">
+            {persona.displayName}
+            <br />
+            <code>{persona.userId}</code>
+          </p>
+        </div>
+
         <p className="ops-rail-foot">
           Dev headers · fixture ReBAC
-          {eyebrow ? (
-            <>
-              <br />
-              {eyebrow}
-            </>
-          ) : null}
+          <br />
+          {eyebrow}
         </p>
       </aside>
       <div className="ops-main">{children}</div>
     </div>
-  );
-}
-
-export function StatusStamp({
-  status,
-  attempt,
-  live,
-}: {
-  status: string;
-  attempt?: number;
-  live?: boolean;
-}) {
-  const tone =
-    status === "Succeeded"
-      ? "ok"
-      : status === "Failed"
-        ? "bad"
-        : status === "Retrying"
-          ? "warn"
-          : status === "Running"
-            ? "run"
-            : "idle";
-
-  return (
-    <span className={cx("ops-stamp", `tone-${tone}`, live && "is-live")}>
-      <span className="ops-stamp-label">{status}</span>
-      {typeof attempt === "number" && attempt > 0 ? (
-        <span className="ops-stamp-meta">· attempt {attempt}</span>
-      ) : null}
-      {live ? <span className="ops-stamp-now" aria-hidden /> : null}
-    </span>
-  );
-}
-
-export function Module({
-  title,
-  tab,
-  children,
-  className,
-  action,
-}: {
-  title: string;
-  tab?: string;
-  children: React.ReactNode;
-  className?: string;
-  action?: React.ReactNode;
-}) {
-  return (
-    <section className={cx("ops-module", className)}>
-      <header className="ops-module-head">
-        <div className="ops-module-titles">
-          {tab ? <span className="ops-tab">{tab}</span> : null}
-          <h2 className="ops-module-title">{title}</h2>
-        </div>
-        {action}
-      </header>
-      <div className="ops-module-body">{children}</div>
-    </section>
   );
 }

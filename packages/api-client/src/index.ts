@@ -1,4 +1,9 @@
-export type JobStatus = "Pending" | "Running" | "Retrying" | "Succeeded" | "Failed";
+export type JobStatus =
+  | "Pending"
+  | "Running"
+  | "Retrying"
+  | "Succeeded"
+  | "Failed";
 
 export type JobDto = {
   id: string;
@@ -84,33 +89,70 @@ export const DEV_PERSONAS: DevPersona[] = [
   },
 ];
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5080";
+const DEFAULT_API_URL =
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5080";
 
-export type ApiClientOptions = {
+/** Thrown for non-2xx responses. Callers branch on status, not string matching. */
+export class ApiError extends Error {
+  readonly status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+
+  get isUnauthorized() {
+    return this.status === 401;
+  }
+
+  get isForbidden() {
+    return this.status === 403;
+  }
+}
+
+export function isApiError(error: unknown): error is ApiError {
+  return error instanceof ApiError;
+}
+
+/**
+ * Auth seam: callers inject how credentials become request headers.
+ * Today: X-User-* via {@link credentialsFromPersona}.
+ * Later: bearer JWT or BFF cookie — same createApiClient interface.
+ */
+export type ResolveCredentials = () =>
+  | HeadersInit
+  | Promise<HeadersInit>;
+
+export type CreateApiClientOptions = {
+  baseUrl?: string;
+  credentials: ResolveCredentials;
+};
+
+/** Dev-header adapter — maps a persona (or Keycloak-shaped claims later) to headers. */
+export function credentialsFromPersona(persona: {
   userId: string;
   tenantId: string;
   displayName?: string;
-};
-
-function headers(opts: ApiClientOptions): HeadersInit {
-  return {
+}): ResolveCredentials {
+  return () => ({
     "Content-Type": "application/json",
-    "X-User-Id": opts.userId,
-    "X-Tenant-Id": opts.tenantId,
-    "X-User-Name": opts.displayName ?? opts.userId,
-  };
+    "X-User-Id": persona.userId,
+    "X-Tenant-Id": persona.tenantId,
+    "X-User-Name": persona.displayName ?? persona.userId,
+  });
 }
 
 async function parse<T>(res: Response): Promise<T> {
   if (res.status === 401) {
-    throw new Error("Unauthorized");
+    throw new ApiError(401, "Unauthorized");
   }
   if (res.status === 403) {
-    throw new Error("Forbidden");
+    throw new ApiError(403, "Forbidden");
   }
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(body || `HTTP ${res.status}`);
+    throw new ApiError(res.status, body || `HTTP ${res.status}`);
   }
   if (res.status === 204) {
     return undefined as T;
@@ -118,29 +160,54 @@ async function parse<T>(res: Response): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-export function createApiClient(opts: ApiClientOptions) {
+export type DistrictApi = {
+  getMe: () => Promise<CurrentUser>;
+  listWorkflows: (tenantId: string) => Promise<WorkflowDto[]>;
+  startEnrollment: (
+    tenantId: string,
+    divisionId: string,
+    title: string,
+  ) => Promise<{ workflowId: string; jobId: string }>;
+  getJob: (jobId: string) => Promise<JobDto>;
+  getAttendance: (tenantId: string) => Promise<AttendanceRowDto[]>;
+};
+
+export function createApiClient(options: CreateApiClientOptions): DistrictApi {
+  const baseUrl = options.baseUrl ?? DEFAULT_API_URL;
+
+  async function request(
+    path: string,
+    init?: RequestInit,
+  ): Promise<Response> {
+    const auth = await options.credentials();
+    const headers = new Headers(auth);
+    if (init?.headers) {
+      new Headers(init.headers).forEach((value, key) => {
+        headers.set(key, value);
+      });
+    }
+    if (init?.body && !headers.has("Content-Type")) {
+      headers.set("Content-Type", "application/json");
+    }
+    return fetch(`${baseUrl}${path}`, { ...init, headers });
+  }
+
   return {
-    getMe: () =>
-      fetch(`${API_URL}/api/me`, { headers: headers(opts) }).then((r) =>
-        parse<CurrentUser>(r),
+    getMe: () => request("/api/me").then((r) => parse<CurrentUser>(r)),
+    listWorkflows: (tenantId) =>
+      request(`/api/tenants/${tenantId}/workflows`).then((r) =>
+        parse<WorkflowDto[]>(r),
       ),
-    listWorkflows: (tenantId: string) =>
-      fetch(`${API_URL}/api/tenants/${tenantId}/workflows`, {
-        headers: headers(opts),
-      }).then((r) => parse<WorkflowDto[]>(r)),
-    startEnrollment: (tenantId: string, divisionId: string, title: string) =>
-      fetch(`${API_URL}/api/tenants/${tenantId}/workflows/enrollment`, {
+    startEnrollment: (tenantId, divisionId, title) =>
+      request(`/api/tenants/${tenantId}/workflows/enrollment`, {
         method: "POST",
-        headers: headers(opts),
         body: JSON.stringify({ divisionId, title }),
       }).then((r) => parse<{ workflowId: string; jobId: string }>(r)),
-    getJob: (jobId: string) =>
-      fetch(`${API_URL}/api/jobs/${jobId}`, { headers: headers(opts) }).then(
-        (r) => parse<JobDto>(r),
+    getJob: (jobId) =>
+      request(`/api/jobs/${jobId}`).then((r) => parse<JobDto>(r)),
+    getAttendance: (tenantId) =>
+      request(`/api/tenants/${tenantId}/reports/attendance`).then((r) =>
+        parse<AttendanceRowDto[]>(r),
       ),
-    getAttendance: (tenantId: string) =>
-      fetch(`${API_URL}/api/tenants/${tenantId}/reports/attendance`, {
-        headers: headers(opts),
-      }).then((r) => parse<AttendanceRowDto[]>(r)),
   };
 }
